@@ -1,0 +1,38 @@
+name: Madeleine — dépendances
+description: Vérifie chaque dépendance ajoutée ou modifiée par la pull request dans les package.json (paquet inventé, version pas exacte ou trop récente, licence hors liste, version dépréciée, script d'installation) et annote la PR.
+author: Carolinedanslesnuages
+
+inputs:
+  strict:
+    description: Échouer aussi sur les avertissements (paquet peu téléchargé, script d'installation, dépendance Git).
+    default: "false"
+  config:
+    description: Fichier de réglages et d'exceptions.
+    default: "madeleine.json"
+  base:
+    description: Commit de base à comparer. Par défaut, la base de la pull request ; sans pull request, toutes les dépendances sont vérifiées.
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Vérifier les dépendances
+      shell: bash
+      env:
+        BASE: ${{ inputs.base || github.event.pull_request.base.sha }}
+        STRICT: ${{ inputs.strict }}
+        CONFIG: ${{ inputs.config }}
+      run: |
+        if ! git rev-parse --git-dir >/dev/null 2>&1; then
+          echo "::error title=Madeleine::Le dépôt n'est pas récupéré : ajoutez « actions/checkout » avant ce contrôle."
+          exit 1
+        fi
+        options=(--config "$CONFIG")
+        [ "$STRICT" = "true" ] && options+=(--strict)
+        if [ -n "$BASE" ]; then
+          git cat-file -e "$BASE^{commit}" 2>/dev/null || git fetch --no-tags --depth=1 origin "$BASE"
+          options+=(--base "$BASE")
+        else
+          options+=(--tout)
+        fi
+        node "${{ github.action_path }}/bin/madeleine.mjs" "${options[@]}"
