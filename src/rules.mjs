@@ -64,7 +64,7 @@ function versionFindings(dependency, info, settings, report, currentTime) {
  * @param info      package metadata from the registry, or null when the package does not exist
  * @param downloads weekly downloads, or null when unknown
  */
-export function checkDependency(dependency, info, downloads, settings = DEFAULT_SETTINGS, currentTime = Date.currentTime()) {
+export function checkDependency(dependency, info, downloads, settings = DEFAULT_SETTINGS, currentTime = Date.now()) {
   const findings = [];
   const report = (level, rule, message) => findings.push({ level, rule, message });
   specFindings(dependency, report);
