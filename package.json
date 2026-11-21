@@ -1,13 +1,33 @@
 {
   "name": "@carolinedanslesnuages/madeleine",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Garde-fou des dépendances ajoutées par un agent de code : paquet inventé, version pas exacte ou trop récente, licence hors liste, script d'installation. Commande et action GitHub, sans dépendance.",
   "type": "module",
-  "bin": { "madeleine": "bin/madeleine.mjs" },
-  "files": ["bin", "src", "action.yml"],
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/*.test.mjs" },
-  "keywords": ["dependencies", "supply-chain", "npm", "slopsquatting", "ai-agents", "github-action"],
-  "repository": { "type": "git", "url": "git+https://github.com/Carolinedanslesnuages/madeleine.git" },
+  "bin": {
+    "madeleine": "bin/madeleine.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "action.yml"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "keywords": [
+    "dependencies",
+    "supply-chain",
+    "npm",
+    "slopsquatting",
+    "ai-agents",
+    "github-action"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Carolinedanslesnuages/madeleine.git"
+  },
   "license": "MIT"
 }
