@@ -2,6 +2,10 @@
 
 Un garde-fou pour les dépendances qu'ajoute un agent de code.
 
+Le nom rend hommage à Marie-Madeleine Fourcade (1909-1989), qui a dirigé le réseau de résistance
+Alliance et l'a réorganisé en groupes cloisonnés pour le protéger : Madeleine garde l'entrée du
+projet, dépendance par dépendance.
+
 Un agent ajoute volontiers un paquet : parfois un nom qui n'existe pas (et qu'une personne
 malveillante peut réserver ensuite), souvent une plage de versions (`^1.2.0`), une version
 publiée la veille, ou une licence incompatible. Madeleine vérifie chaque dépendance **ajoutée ou
