@@ -1,6 +1,6 @@
 {
   "name": "@carolinedanslesnuages/madeleine",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Garde-fou des dépendances ajoutées par un agent de code : paquet inventé, version pas exacte ou trop récente, licence hors liste, script d'installation. Commande et action GitHub, sans dépendance.",
   "type": "module",
   "bin": {

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Carolinedanslesnuages/madeleine/compare/v1.0.0...v1.1.0) (2026-11-22)
+
+
+### Features
+
+* 🌸 figer une version déjà verrouillée ne bloque plus pour l'âge ([#6](https://github.com/Carolinedanslesnuages/madeleine/issues/6)) ([d7c924d](https://github.com/Carolinedanslesnuages/madeleine/commit/d7c924ddf497f47438787910a71495c54210d5e1))
+
 ## 1.0.0 (2026-11-21)
 
 
