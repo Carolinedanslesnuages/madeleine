@@ -31,6 +31,23 @@ avant la PR ne sont pas revérifiées.
 `package-lock.json` de la base) n'apporte aucune nouvelle version : la règle `age` ne s'applique
 pas. Les autres règles, si.
 
+## À quoi ça ressemble
+
+Une branche qui ajoute deux dépendances, dont une qui n'existe pas :
+
+```text
+✗ csv-exporter-pro@^2.1.0  (package.json, dependencies)
+    ✗ « ^2.1.0 » n'est pas une version exacte : écrivez la version précise (ex. 2.1.0), pour que chaque installation soit identique.
+    ✗ « csv-exporter-pro » n'existe pas dans le registre npm. Un nom inventé par un agent peut être réservé ensuite par quelqu'un de malveillant.
+✗ left-pad@1.3.0  (package.json, dependencies)
+    ✗ licence « WTFPL » hors de la liste acceptée (MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD).
+    ✗ version dépréciée : « use String.prototype.padStart() »
+
+2 dépendances vérifiées · 4 erreurs · 0 avertissement
+```
+
+Dans une pull request, chaque constat annote aussi la ligne du `package.json`.
+
 ## Dans une pull request (GitHub Actions)
 
 ```yaml

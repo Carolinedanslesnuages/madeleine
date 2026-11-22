@@ -1,5 +1,5 @@
 name: Madeleine — dépendances
-description: Vérifie chaque dépendance ajoutée ou modifiée par la pull request dans les package.json (paquet inventé, version pas exacte ou trop récente, licence hors liste, version dépréciée, script d'installation) et annote la PR.
+description: "Vérifie les dépendances ajoutées par la PR : paquet inventé, version floue ou trop récente, licence, script d'installation."
 author: Carolinedanslesnuages
 
 inputs:
@@ -36,3 +36,7 @@ runs:
           options+=(--tout)
         fi
         node "${{ github.action_path }}/bin/madeleine.mjs" "${options[@]}"
+
+branding:
+  icon: package
+  color: purple
