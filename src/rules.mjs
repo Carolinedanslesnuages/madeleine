@@ -43,7 +43,9 @@ function versionFindings(dependency, info, settings, report, currentTime) {
     return;
   }
   const publishedAt = info.time && info.time[version] ? new Date(info.time[version]) : null;
-  if (publishedAt) {
+  // Already locked at the base: the version is installed everywhere already, its age is not news.
+  const alreadyLocked = Boolean(dependency.lockedAtBase) && dependency.lockedAtBase === version;
+  if (publishedAt && !alreadyLocked) {
     const ageDays = Math.floor((currentTime - publishedAt.getTime()) / DAY_MS);
     if (ageDays < settings.ageMinimumJours) {
       report('error', 'age', `la version ${version} a été publiée il y a ${ageDays} jour${ageDays > 1 ? 's' : ''} (minimum ${settings.ageMinimumJours}) : une version piégée est souvent retirée dans les premiers jours. Attendez, ou prenez la précédente.`);
@@ -60,7 +62,7 @@ function versionFindings(dependency, info, settings, report, currentTime) {
 }
 
 /**
- * Checks one dependency { packageName, kind, spec, version? } against the registry.
+ * Checks one dependency { packageName, kind, spec, version?, lockedAtBase? } against the registry.
  * @param info      package metadata from the registry, or null when the package does not exist
  * @param downloads weekly downloads, or null when unknown
  */
