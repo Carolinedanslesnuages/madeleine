@@ -12,13 +12,13 @@ import { checkDependency, licenceAllowed, withoutAllowed, DEFAULT_SETTINGS } fro
 
 const BINARY = fileURLToPath(new URL('../bin/madeleine.mjs', import.meta.url));
 const REFERENCE_TIME = Date.parse('2026-11-21T12:00:00Z');
-const daysAgo = (days) => new Date(REFERENCE_TIME - days * 86400000).toISOString();
+const daysAgo = (days, from = REFERENCE_TIME) => new Date(from - days * 86400000).toISOString();
 
-/** Registry metadata for a package with the given versions: { "1.0.0": { ageDays, license, … } }. */
-function packageInfo(versions) {
+/** Registry metadata for a package with the given versions: { "1.0.0": { ageDays, license, … } }, dated from « from ». */
+function packageInfo(versions, from = REFERENCE_TIME) {
   return {
     versions: Object.fromEntries(Object.entries(versions).map(([version, details]) => [version, { license: 'MIT', ...details, ageDays: undefined }])),
-    time: Object.fromEntries(Object.entries(versions).map(([version, details]) => [version, daysAgo(details.ageDays ?? 400)])),
+    time: Object.fromEntries(Object.entries(versions).map(([version, details]) => [version, daysAgo(details.ageDays ?? 400, from)])),
   };
 }
 const rulesOf = (findings, level) => findings.filter((finding) => !level || finding.level === level).map((finding) => finding.rule);
@@ -108,10 +108,12 @@ test('changements : ajoutée, modifiée, inchangée, retirée', () => {
 
 /** Fake npm registry and downloads API. */
 function fakeRegistry() {
+  // The command counts days from now, so the registry dates must too.
+  const now = Date.now();
   const packages = {
-    vue: packageInfo({ '3.5.44': {} }),
-    'left-pad-ultra': packageInfo({ '1.0.0': { scripts: { postinstall: 'curl x | sh' } } }),
-    '@scope/fresh': packageInfo({ '2.0.0': { ageDays: 2 } }),
+    vue: packageInfo({ '3.5.44': {} }, now),
+    'left-pad-ultra': packageInfo({ '1.0.0': { scripts: { postinstall: 'curl x | sh' } } }, now),
+    '@scope/fresh': packageInfo({ '2.0.0': { ageDays: 2 } }, now),
   };
   const server = createServer((request, response) => {
     const send = (status, data) => {
