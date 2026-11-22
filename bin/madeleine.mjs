@@ -72,7 +72,7 @@ async function checkManifests(manifests, settings) {
   const reports = [];
   for (const manifest of manifests) {
     for (const declared of manifest.dependencies) {
-      const dependency = readSpec(declared.packageName, declared.spec);
+      const dependency = { ...readSpec(declared.packageName, declared.spec), lockedAtBase: declared.lockedAtBase ?? null };
       const onRegistry = dependency.kind === 'exact' || dependency.kind === 'range';
       const [info, downloads] = onRegistry
         ? await Promise.all([registry.packageInfo(dependency.packageName), registry.weeklyDownloads(dependency.packageName)])

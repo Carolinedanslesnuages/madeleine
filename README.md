@@ -23,6 +23,10 @@ modifiée** dans les `package.json` du projet, espaces de travail compris, avant
 ✗ bloque la PR. ⚠ prévient seulement (sauf avec `--strict`). Les dépendances déjà présentes
 avant la PR ne sont pas revérifiées.
 
+**Figer une plage sur la version déjà installée** (`^1.2.3` → `1.2.3`, la version du
+`package-lock.json` de la base) n'apporte aucune nouvelle version : la règle `age` ne s'applique
+pas. Les autres règles, si.
+
 ## Dans une pull request (GitHub Actions)
 
 ```yaml

@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readSpec, lowestVersion } from '../src/version-spec.mjs';
-import { changedDependencies } from '../src/changes.mjs';
+import { changedDependencies, lockedVersions } from '../src/changes.mjs';
 import { checkDependency, licenceAllowed, withoutAllowed, DEFAULT_SETTINGS } from '../src/rules.mjs';
 
 const BINARY = fileURLToPath(new URL('../bin/madeleine.mjs', import.meta.url));
@@ -68,6 +68,26 @@ test('âge, licence, dépréciation, script d’installation, popularité', () =
   assert.deepEqual(rulesOf(check('lib', '1.0.0', packageInfo({ '1.0.0': {} }), null)), [], 'statistiques indisponibles : rien');
 });
 
+test('âge : une version déjà verrouillée sur la base n’est pas nouvelle', () => {
+  const young = packageInfo({ '3.6.0': { ageDays: 3 } });
+  const pinned = (lockedAtBase) => checkDependency({ ...readSpec('vue', '3.6.0'), lockedAtBase }, young, 100000, DEFAULT_SETTINGS, REFERENCE_TIME);
+  assert.deepEqual(rulesOf(pinned('3.6.0')), [], 'même version que le verrou : rien');
+  assert.deepEqual(rulesOf(pinned('3.5.0')), ['age'], 'version différente du verrou : nouvelle');
+  assert.deepEqual(rulesOf(pinned(null)), ['age'], 'pas de verrou : nouvelle');
+  const youngAndBad = checkDependency({ ...readSpec('lib', '1.0.0'), lockedAtBase: '1.0.0' }, packageInfo({ '1.0.0': { ageDays: 3, license: 'GPL-3.0' } }), 100000, DEFAULT_SETTINGS, REFERENCE_TIME);
+  assert.deepEqual(rulesOf(youngAndBad), ['licence'], 'les autres règles restent');
+});
+
+test('verrou : formats 1 à 3, paquets à portée, fichier absent ou illisible', () => {
+  const lockfile = JSON.stringify({
+    packages: { '': {}, 'node_modules/vue': { version: '3.5.44' }, 'node_modules/@scope/lib': { version: '2.0.0' }, 'node_modules/vue/node_modules/deep': { version: '1.0.0' } },
+    dependencies: { vue: { version: '3.0.0' }, old: { version: '0.1.0' } },
+  });
+  assert.deepEqual(Object.fromEntries(lockedVersions(lockfile)), { vue: '3.5.44', '@scope/lib': '2.0.0', old: '0.1.0' });
+  assert.equal(lockedVersions('').size, 0);
+  assert.equal(lockedVersions('{ pas du json').size, 0);
+});
+
 test('Git et local : hors registre', () => {
   assert.deepEqual(rulesOf(check('val', 'github:moi/val#main', null)), ['git-epinglee']);
   assert.deepEqual(rulesOf(check('val', `github:moi/val#${'b'.repeat(40)}`, null), 'warning'), ['hors-registre']);
@@ -106,34 +126,51 @@ function fakeRegistry() {
   return new Promise((resolve) => server.listen(0, () => resolve({ server, baseUrl: `http://127.0.0.1:${server.address().port}` })));
 }
 
-function repositoryWith(manifest) {
+function repositoryWith(manifest, otherFiles = {}) {
   const folder = mkdtempSync(join(tmpdir(), 'madeleine-'));
   const runGit = (...args) => execFileSync('git', args, { cwd: folder, stdio: 'ignore' });
   runGit('init', '-q');
   runGit('config', 'user.email', 'essai@exemple.fr');
   runGit('config', 'user.name', 'essai');
   writeFileSync(join(folder, 'package.json'), JSON.stringify(manifest, null, 2));
+  for (const [path, content] of Object.entries(otherFiles)) writeFileSync(join(folder, path), content);
   runGit('add', '-A');
   runGit('commit', '-q', '-m', 'base');
   return folder;
 }
 
+/** Runs the command in a folder against the fake registry (asynchronous: the registry runs in this process). */
+const runCliIn = (folder, baseUrl) => (args, env = {}) => new Promise((resolve) => {
+  const child = spawn(process.execPath, [BINARY, ...args], {
+    cwd: folder,
+    env: { ...process.env, MADELEINE_REGISTRY: baseUrl, MADELEINE_DOWNLOADS_API: baseUrl, GITHUB_ACTIONS: '', ...env },
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', (chunk) => (stdout += chunk));
+  child.stderr.on('data', (chunk) => (stderr += chunk));
+  child.on('close', (status) => resolve({ status, stdout, stderr }));
+});
+
+test('commande : figer une plage sur la version déjà verrouillée ne bloque pas pour l’âge', async () => {
+  const { server, baseUrl } = await fakeRegistry();
+  try {
+    const lockfile = JSON.stringify({ lockfileVersion: 3, packages: { '': {}, 'node_modules/@scope/fresh': { version: '2.0.0' } } });
+    const folder = repositoryWith({ dependencies: { '@scope/fresh': '^2.0.0' } }, { 'package-lock.json': lockfile });
+    writeFileSync(join(folder, 'package.json'), JSON.stringify({ dependencies: { '@scope/fresh': '2.0.0' } }, null, 2));
+    const pinned = await runCliIn(folder, baseUrl)([]);
+    assert.equal(pinned.status, 0, pinned.stdout + pinned.stderr);
+    assert.match(pinned.stdout, /✓ @scope\/fresh@2\.0\.0/);
+  } finally {
+    server.close();
+  }
+});
+
 test('commande : seulement les changements, annotations, --strict, --json, exceptions', async () => {
   const { server, baseUrl } = await fakeRegistry();
   try {
     const folder = repositoryWith({ dependencies: { vue: '3.5.44' } });
-    // Asynchronous on purpose: the fake registry runs in this same process.
-    const runCli = (args, env = {}) => new Promise((resolve) => {
-      const child = spawn(process.execPath, [BINARY, ...args], {
-        cwd: folder,
-        env: { ...process.env, MADELEINE_REGISTRY: baseUrl, MADELEINE_DOWNLOADS_API: baseUrl, GITHUB_ACTIONS: '', ...env },
-      });
-      let stdout = '';
-      let stderr = '';
-      child.stdout.on('data', (chunk) => (stdout += chunk));
-      child.stderr.on('data', (chunk) => (stderr += chunk));
-      child.on('close', (status) => resolve({ status, stdout, stderr }));
-    });
+    const runCli = runCliIn(folder, baseUrl);
     assert.match((await runCli([])).stdout, /Aucune dépendance ajoutée ou modifiée depuis HEAD/);
     writeFileSync(join(folder, 'package.json'), JSON.stringify({
       dependencies: { vue: '3.5.44', 'vue-magic-helper': '1.0.0', 'left-pad-ultra': '1.0.0' },
