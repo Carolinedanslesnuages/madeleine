@@ -75,9 +75,9 @@ défaut).
 ## Sur votre ordinateur
 
 ```sh
-npx github:Carolinedanslesnuages/madeleine          # vos changements en cours
-npx github:Carolinedanslesnuages/madeleine --base main
-npx github:Carolinedanslesnuages/madeleine --tout   # toutes les dépendances du projet
+npx @carolinedanslesnuages/madeleine          # vos changements en cours
+npx @carolinedanslesnuages/madeleine --base main
+npx @carolinedanslesnuages/madeleine --tout   # toutes les dépendances du projet
 ```
 
 | Option | Rôle |
